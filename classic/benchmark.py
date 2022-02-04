@@ -26,9 +26,6 @@ else:
 
 sample_size = args.batch_size
 
-#snrMinBit = args.snr_min + 10. * np.log10(np.log2(M**2))
-#snrMaxBit = args.snr_max + 10. * np.log10(np.log2(M**2))
-#snr_range = np.arange(snrMinBit, snrMaxBit+1)
 snr_range = np.arange(args.snr_min, args.snr_max+1)
 
 sigConst = np.linspace(-M+1, M-1, M) 
@@ -68,8 +65,6 @@ def generate_data_qam(sample_size, repeat_size, sigConst, SNR, NT, NR, correlate
         hBatchi *= gains
 
     if args.data:
-        #hBatch = np.load('/data/Mehrdad/channel_sequences_normalized.npy')[:,0] 
-        #hBatch = np.load('/data/Mehrdad/Jakobs_channels_normalized_32.npy')[:,0]#[args.index]#[0:int(1e5)]
         hBatch = np.load(args.data_dir)
         hBatch = np.reshape(hBatch, (-1, args.y_size, args.x_size))
         print(hBatch.shape)
@@ -95,7 +90,6 @@ def generate_data_qam(sample_size, repeat_size, sigConst, SNR, NT, NR, correlate
         ,707,999,126,279,381,356,155,933,313,595])[:sample_size]                           
         else:
             idx_ = np.arange(0,sample_size)
-        #hBatch = hBatch[np.random.randint(0,hBatch.shape[0], sample_size)]
         hBatch = hBatch[idx_]
         hBatch = np.reshape(np.tile(np.expand_dims(hBatch, axis=0), (repeat_size, 1, 1, 1)), (-1, hBatch.shape[1], hBatch.shape[2]))
     xBatch = np.random.randint(0, len(sigConst), size=[sample_size * repeat_size, 2*NT, 1])
@@ -118,11 +112,8 @@ def generate_data_qam(sample_size, repeat_size, sigConst, SNR, NT, NR, correlate
 
 def generate_data_pam(sample_size, sigConst, SNR, NT, NR):
     hBatch = np.random.normal(0., 1./np.sqrt(NR), size=[sample_size, NR, NT])
-#    hBatch /= np.sqrt((sigConst ** 2).mean())
     xBatch = np.random.randint(0, len(sigConst), size=[sample_size, NT, 1])
-    #hBatch *= (10. ** (13/20.))
     sBatch = np.take(sigConst, xBatch)
-    #sBatch *= (np.sqrt(1.) * 10. ** (SNR/20.))
     wBatch = np.random.normal(0., 1., size=[sample_size, NR, 1])
     wBatch *= (10. ** (-SNR/20.)) 
     yBatch = np.matmul(hBatch, sBatch) + wBatch

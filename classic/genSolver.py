@@ -54,7 +54,6 @@ class solvers:
     def vaSolver(self, hBatch, hthBatch, yBatch, NT):
         constellation = np.array([-3,-1,1,3])
         alpha = np.sqrt(np.mean(constellation**2))
-        # [-1,1] maps to [-3,-1,
         results = []
         NT *= 2
         W = np.concatenate([np.eye(NT), 2 * np.eye(NT)], axis=1)
@@ -80,7 +79,6 @@ class solvers:
             model.addConstr(traceH2B==quicksum(DC1[i] for i in range(2*NT)))
         
             rhs = np.matmul(np.matmul(W.transpose(),H.transpose()), Y)
-            #obj = traceH2B - 2 * sum([b[i]*rhs[i] for i in range(2*NT)])
             HtG = np.matmul(H.T, G)
             print(HtG.shape)
             obj = (4./alpha**2) * traceH2B - 4/alpha * sum([b[i]*rhs[i] for i in range(2*NT)]) - 12./alpha * sum([sum([HtG[i,j]*b[j] for j in range(2*NT)]) for i in range(HtG.shape[0])])
@@ -106,20 +104,15 @@ class solvers:
         
         return results
 
-    #def mlSolver(self, hBatch, yBatch, m, n, x_baseleline, Symb):
     def mlSolver(self, hBatch, yBatch, Symb):
         results = []
         status = []
         m = len(hBatch[0,0,:])
         n = len(hBatch[0,:,0])
         print(m, n)
-        #Symb = list(Symb)
-        #print Symb
         for idx_, Y in enumerate(yBatch):
             if idx_ % 10 == 0:
                 print(idx_ / float(len(yBatch)) * 100. ,"% completed")
-        #Y = list(Y)
-            #H = list(hBatch[idx_])
             H = hBatch[idx_]
             model = Model('mimo')
             k = len(Symb)
@@ -131,21 +124,15 @@ class solvers:
             # Defining S[i]
             for i in range(m):
                 model.addConstr(S[i] == quicksum(Z[i,j] * Symb[j] for j in range(k)))
-                #S[i] == quicksum(Z[i,j] * Symb[j] for j in range(k))
             
             # Constraint on Z[i,j]
             model.addConstrs((Z.sum(j,'*') == 1
                              for j in range(m)), name='Const1')
             
-            
             # Defining E
             for i in range(n):
                 E[i] = quicksum(H[i][j] * S[j] for j in range(m)) - Y[i][0]
-            #for i in range(m):
-            #    E[i] = quicksum(quicksum(H[l,i]*H[l,j] for l in range(n)) * S[j] 
-            #            - quicksum(H[ll,i]*Y[ll] for ll in range(n))  
-            #            for j in range(m)) 
-            
+
             # Defining the objective function
             obj = E.prod(E)  
             model.setObjective(obj, GRB.MINIMIZE)
@@ -154,12 +141,6 @@ class solvers:
             model.update()
              
             model.optimize()
-            
-            #model.write('MIMO_BPSK.txt')
-            
-            #print('')
-            #print('Solution:')
-            #print('')
             
             # Retrieve optimization result
             solution = model.getAttr('X', S)
@@ -172,87 +153,3 @@ class solvers:
                  x_est.append(solution[nnn])
             results.append(x_est)
         return results, np.array(status)
-    
-#    def BQP_solver_mosek(self, H, b, m, n, x_baseline):
-#        results = []
-#        cnt_ = 0
-#        for ii, y in enumerate(b):
-#            cnt_ += 1
-#            y = np.reshape(y, (n,1))
-#            y2 = y + np.matmul(H, np.ones((m,1)))
-#            H2 = 2 * H
-#            Q11 = np.matmul(np.matrix.transpose(H2), H2)
-#            Q12 = -1. *  np.matmul(np.matrix.transpose(H2), y2)
-#            Q21 = np.matrix.transpose(Q12)
-#            Q22 = np.matmul(np.matrix.transpose(y), y)
-#            
-#            Q1 = np.concatenate([Q11, Q12], axis= 1)
-#            Q2 = np.concatenate([Q21, Q22], axis= 1)
-#            
-#            Q = np.concatenate([Q1,Q2], axis= 0) 
-#            P = np.zeros(m+1)
-#            R = 0.0
-#            
-#            solver = BB(Q, P, R)
-#            solver.solve()
-#            
-#            t_star = solver.xx[-1]
-#            if t_star==1:
-#                s_star = solver.xx[0:-1]
-#            else:
-#                s_star = 1 - solver.xx[0:-1]
-#            results.append(s_star)
-#            if cnt_ % 100 == 0:
-#                print cnt_
-#            if not (s_star == x_baseline[ii]).all():
-#                print s_star, x_baseline[ii]
-#                solver.summary()
-#                return
-#        return results
-#    def PAM4_solver(self, H, b, m, n):
-#        #m = 30
-#        #n = 60
-#        #H = np.random.normal(0.0, 1.0, (n,m))
-#        #x_labels = np.random.randint(0, 2, size =(m,1))
-#        #x = 2 * x_labels - 1
-#        #y = np.matmul(H,x) + np.random.normal(0, 1., size=(n, 1))
-#        #print y.shape
-#        W = np.concatenate([np.eye(m), 2*np.eye(m)], axis=1)
-#        H = np.matmul(H,W)
-#
-#        results = []
-#        cnt_ = 0
-#        for y in b:
-#            cnt_ += 1
-#            y = np.reshape(y, (n,1))
-#            y2 = y + np.matmul(H, np.ones((2*m,1)))
-#            H2 = 2 * H
-#            Q11 = np.matmul(np.matrix.transpose(H2), H2)
-#            Q12 = -1. *  np.matmul(np.matrix.transpose(H2), y2)
-#            Q21 = np.matrix.transpose(Q12)
-#            Q22 = np.matmul(np.matrix.transpose(y), y)
-#            
-#            Q1 = np.concatenate([Q11, Q12], axis= 1)
-#            Q2 = np.concatenate([Q21, Q22], axis= 1)
-#            
-#            Q = np.concatenate([Q1,Q2], axis= 0) 
-#            P = np.zeros(2*m+1)
-#            R = 0.0
-#            print Q.shape, P.shape
-#            solver = BB(Q, P, R)
-#            solver.solve()
-#            
-#            t_star = solver.xx[-1]
-#            if t_star==1:
-#                s_star = solver.xx[0:-1]
-#            else:
-#                s_star = 1 - solver.xx[0:-1]
-#            
-#            nonbool_s = 2 * s_star - 1
-#            s1 = nonbool_s[0:m]
-#            s2 = nonbool_s[m::]
-#            S = s1 + 2 * s2
-#            results.append(S)
-#            if cnt_ % 100 == 0:
-#                print cnt_
-#        return results
