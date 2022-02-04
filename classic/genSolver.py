@@ -4,14 +4,14 @@ import numpy as np
 
 class solvers:
     def ampSolver(self, hBatch, yBatch, Symb, noise_sigma):
-        def F(x_in, tau_l, Symb):
+        def F(x_in, tau_l, Symb): # 均值
             arg = -(x_in - Symb.reshape((1,1,-1))) ** 2 / 2. / tau_l
             exp_arg = np.exp(arg - np.max(arg, axis=2, keepdims=True))
             prob = exp_arg / np.sum(exp_arg, axis=2, keepdims=True)
             f = np.matmul(prob, Symb.reshape((1,-1,1)))
             return f
 
-        def G(x_in, tau_l, Symb):
+        def G(x_in, tau_l, Symb): # 方差
             arg = -(x_in - Symb.reshape((1,1,-1))) ** 2 / 2. / tau_l
             exp_arg = np.exp(arg - np.max(arg, axis=2, keepdims=True))
             prob = exp_arg / np.sum(exp_arg, axis=2, keepdims=True)
@@ -22,18 +22,19 @@ class solvers:
         NT = hBatch.shape[2]
         NR = hBatch.shape[1]
         N0 = noise_sigma ** 2 / 2.
+        # 这里 1 和 l 真是生怕我区分的出来。原始代码 l 全部修改为 iterl
         xhat = np.zeros((numIterations, hBatch.shape[0], hBatch.shape[2], 1))
         z = np.zeros((numIterations, hBatch.shape[0], hBatch.shape[2], 1))
         r = np.zeros((numIterations, hBatch.shape[0], hBatch.shape[1], 1))
         tau = np.zeros((numIterations, hBatch.shape[0], 1, 1))
         r[0] = yBatch
-        for l in range(numIterations-1):
-            z[l] = xhat[l] + np.matmul(hBatch.transpose((0,2,1)), r[l])
-            xhat[l+1] = F(z[l], N0 * (1.+tau[l]), Symb)
-            tau[l+1] = float(NT) / NR / N0 * np.mean(G(z[l], N0 * (1. + tau[l]), Symb), axis=1, keepdims=True)
-            r[l+1] = yBatch - np.matmul(hBatch, xhat[l+1]) + tau[l+1]/(1.+tau[l]) * r[l]
+        for iterl in range(numIterations-1):
+            z[iterl] = xhat[iterl] + np.matmul(hBatch.transpose((0,2,1)), r[iterl])
+            xhat[iterl+1] = F(z[iterl], N0 * (1.+tau[iterl]), Symb)
+            tau[iterl+1] = float(NT) / NR / N0 * np.mean(G(z[iterl], N0 * (1. + tau[iterl]), Symb), axis=1, keepdims=True)
+            r[iterl+1] = yBatch - np.matmul(hBatch, xhat[iterl+1]) + tau[iterl+1]/(1.+tau[iterl]) * r[iterl]
 
-        return xhat[l+1]
+        return xhat[iterl+1]
     def sdrSolver(self, hBatch, yBatch, constellation, NT):
         results = []
         for i, H in enumerate(hBatch):
