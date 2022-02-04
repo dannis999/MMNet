@@ -7,7 +7,9 @@ MMNet is a massive MIMO signal detection scheme based on light online learning w
 0. [Repository structure](#repository-structure)
 
 ## Introduction
-This repository contains MMNet signal detection model, the channels dataset, and benchmarking detection schemes discusssed in the paper "Adaptive Neural Signal Detection for Massive MIMO" (https://arxiv.org/abs/1906.04610). On i.i.d. Gaussian channels, MMNet requires two orders of magnitude fewer operations than existing deep learning schemes but achieves near-optimal performance. On spatially-correlated channels, it achieves the same error rate as the next-best learning scheme (OAMPNet) at 2.5dB lower SNR and with at least 10x less computational complexity. MMNet is also 4--8dB better overall than a classic linear scheme like the minimum mean square error (MMSE) detector.
+This repository contains MMNet signal detection model, the channels dataset, and benchmarking detection schemes discusssed in the paper "Adaptive Neural Signal Detection for Massive MIMO" (https://ieeexplore.ieee.org/document/9103314/). On i.i.d. Gaussian channels, MMNet requires two orders of magnitude fewer operations than existing deep learning schemes but achieves near-optimal performance. On spatially-correlated channels, it achieves the same error rate as the next-best learning scheme (OAMPNet) at 2.5dB lower SNR and with at least 10x less computational complexity. MMNet is also 4--8dB better overall than a classic linear scheme like the minimum mean square error (MMSE) detector.
+
+DOI: 10.1109/TWC.2020.2996144
 
 ## Citation
 You may cite this project as:
